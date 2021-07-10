@@ -14,3 +14,6 @@ croissant
 
 # Dependency directories
 vendor/
+
+# Secret file
+files/secret/secret.json
