@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/Arkoes07/croissant/pkg/secret"
-	secretservice "github.com/Arkoes07/croissant/pkg/secret/service"
+	"github.com/Arkoes07/croissant/pkg/secret/jsonsecret"
 )
 
 func main() {
@@ -23,10 +23,10 @@ func main() {
 	// initialize secret service
 	var secretSvc secret.Service
 	{
-		cfg := secretservice.Config{
+		cfg := jsonsecret.Config{
 			FilePath: filepath.Join(secretDir, "secret.json"),
 		}
-		secretSvc = secretservice.New(cfg)
+		secretSvc = jsonsecret.New(cfg)
 	}
 
 	// parse and get data from secret file
