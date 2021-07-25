@@ -29,11 +29,20 @@ func New(cfg Config) *service {
 
 // secretJSON represents the structure of data in a json secret file
 type secretJSON struct {
+	Spotify struct {
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+	} `json:"spotify"`
 }
 
 // constructSecret will constroct Secret object from secretJSON
 func constructSecret(sJSON *secretJSON) *secret.Secret {
-	return &secret.Secret{}
+	return &secret.Secret{
+		Spotify: secret.Spotify{
+			ClientID:     sJSON.Spotify.ClientID,
+			ClientSecret: sJSON.Spotify.ClientSecret,
+		},
+	}
 }
 
 // Parse will parse and return the data in the secret file
