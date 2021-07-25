@@ -84,10 +84,11 @@ func (s *service) GetSongs() ([]song.Song, error) {
 	}
 
 	// get songs from playlist
-	for i, track := range playlist.Tracks.Tracks {
-		// get only songsCount songs
-		if i == s.cfg.SongsCount {
-			break
+	count := 0
+	for _, track := range playlist.Tracks.Tracks {
+		// skip if track doesn't have preview URL
+		if track.Track.PreviewURL == "" {
+			continue
 		}
 
 		// get artists from a playlist track
@@ -105,6 +106,12 @@ func (s *service) GetSongs() ([]song.Song, error) {
 
 		// append into songs array
 		songs = append(songs, song)
+
+		// get only songsCount songs
+		count++
+		if count == s.cfg.SongsCount {
+			break
+		}
 	}
 
 	// verify songs count
