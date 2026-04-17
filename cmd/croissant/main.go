@@ -4,32 +4,22 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/Arkoes07/croissant/internal/quiz"
 	"github.com/Arkoes07/croissant/internal/quiz/memorystore"
 	"github.com/Arkoes07/croissant/internal/quiz/quizservice"
 	"github.com/Arkoes07/croissant/internal/song"
-	"github.com/Arkoes07/croissant/internal/song/jsonservice"
+	"github.com/Arkoes07/croissant/internal/song/deezerservice"
 	"github.com/Arkoes07/croissant/internal/web"
 )
 
 func main() {
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// initialize song service from local JSON file
-	// TODO: switch back to spotifyservice once API access is restored
+	// initialize song service from Deezer API
 	var songSvc song.Service
 	{
-		cfg := jsonservice.Config{
-			FilePath:   filepath.Join(dir, "files", "songs", "songs.json"),
+		songSvc = deezerservice.New(deezerservice.Config{
 			SongsCount: 20,
-		}
-		songSvc = jsonservice.New(cfg)
+		})
 	}
 
 	// initialize quiz generator (10 questions, 4 choices each)
