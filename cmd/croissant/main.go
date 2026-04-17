@@ -4,6 +4,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/Arkoes07/croissant/internal/quiz"
 	"github.com/Arkoes07/croissant/internal/quiz/memorystore"
@@ -43,7 +44,11 @@ func main() {
 		log.Fatalf("[main] failed to init web server: %v\n", err)
 	}
 
-	addr := ":8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
 	slog.Info("server starting", "addr", addr)
 	if err := http.ListenAndServe(addr, srv.Handler()); err != nil {
 		log.Fatalf("[main] server error: %v\n", err)

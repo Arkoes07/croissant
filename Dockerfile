@@ -8,5 +8,6 @@ RUN go build -o croissant ./cmd/croissant
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/croissant .
+ENV PORT=8080
 EXPOSE 8080
 CMD ["./croissant"]
