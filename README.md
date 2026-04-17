@@ -1,22 +1,78 @@
-# Croissant
+# Croissant 🥐
 
-## Getting Started
+A song-guessing quiz game built with Go. Listen to 30-second audio previews and pick the correct song title from four choices. Songs are sourced from Deezer's public API — no API key required.
 
-### Installing
+## Features
 
-* Clone repository
-* Get dependancies
-```
-go mod vendor
+- 10 questions per game, 4 choices each
+- 3 era playlists to choose from: 2000s, 2010s, 2020s hits
+- Custom dark-themed audio player
+- Server-rendered HTML with HTMX for seamless partial updates
+- Hexagonal architecture (ports & adapters)
+
+## Tech Stack
+
+- **Language:** Go 1.24
+- **HTTP:** stdlib `net/http` (Go 1.22+ ServeMux)
+- **UI:** `html/template` + HTMX + HTML5 `<audio>`
+- **Songs:** [Deezer API](https://developers.deezer.com/api) (no credentials needed)
+
+## Running Locally
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/Arkoes07/croissant.git
+cd croissant
+
+# 2. Download dependencies
+go mod download
+
+# 3. Run
+go run ./cmd/croissant
 ```
 
-### Executing program
-* create a secret file `files/secret/secret.json` with JSON structure defines `files/secret/secret-template.json`, and fill it with the correct value
-* build
+Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+## Configuration
+
+All config is via environment variables — no config files needed.
+
+| Variable    | Default  | Description                                             |
+|-------------|----------|---------------------------------------------------------|
+| `PORT`      | `8080`   | Port the HTTP server listens on                         |
+| `BASE_PATH` | _(none)_ | URL prefix if mounted at a sub-path (e.g. `/croissant`) |
+
+## Deployment
+
+The repo includes a `Dockerfile` for container-based deployments. It uses a multi-stage build with `golang:1.24-alpine`.
+
+```bash
+docker build -t croissant .
+docker run -p 8080:8080 croissant
 ```
-go build
+
+This project is deployed on a self-hosted [Coolify](https://coolify.io) instance using the Dockerfile build pack.
+
+## Architecture
+
+Hexagonal (ports & adapters). Domain packages define `Service` interfaces; subpackages provide concrete adapters.
+
 ```
-* run
+croissant/
+├── cmd/croissant/main.go          ← entrypoint, wires everything together
+└── internal/
+    ├── secret/                    ← Secret model + Service port
+    │   └── jsonsecret/            ← JSON-file adapter
+    ├── song/                      ← Song model + Service port
+    │   ├── deezerservice/         ← Deezer API adapter
+    │   └── jsonservice/           ← Local JSON file adapter (for dev)
+    ├── quiz/                      ← Quiz domain: Generator, Store, Service port
+    │   ├── memorystore/           ← In-memory Store adapter
+    │   └── quizservice/           ← Quiz Service adapter
+    └── web/                       ← HTTP handlers, server, templates
+        └── templates/             ← HTML templates (layout, home, question, answer, result)
 ```
-./croissant.exe
-```
+
+## License
+
+MIT
