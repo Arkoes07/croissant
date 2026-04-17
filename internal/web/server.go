@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Arkoes07/croissant/internal/quiz"
-	"github.com/Arkoes07/croissant/internal/song"
 )
 
 //go:embed templates
@@ -15,10 +14,8 @@ var templateFS embed.FS
 
 // Server holds all dependencies for the HTTP layer.
 type Server struct {
-	songSvc   song.Service
-	generator *quiz.Generator
-	store     quiz.Store
-	tmpl      *parsedTemplates
+	quizSvc quiz.Service
+	tmpl    *parsedTemplates
 }
 
 // parsedTemplates holds pre-parsed template sets, one per rendered view.
@@ -31,17 +28,15 @@ type parsedTemplates struct {
 
 // New creates a Server, parsing all templates eagerly so startup fails fast
 // on any template syntax error.
-func New(songSvc song.Service, gen *quiz.Generator, store quiz.Store) (*Server, error) {
+func New(quizSvc quiz.Service) (*Server, error) {
 	tmpl, err := parseTemplates(templateFS)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Server{
-		songSvc:   songSvc,
-		generator: gen,
-		store:     store,
-		tmpl:      tmpl,
+		quizSvc: quizSvc,
+		tmpl:    tmpl,
 	}, nil
 }
 

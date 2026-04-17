@@ -9,6 +9,7 @@ import (
 
 	"github.com/Arkoes07/croissant/internal/quiz"
 	"github.com/Arkoes07/croissant/internal/quiz/memorystore"
+	"github.com/Arkoes07/croissant/internal/quiz/quizservice"
 	"github.com/Arkoes07/croissant/internal/secret"
 	"github.com/Arkoes07/croissant/internal/secret/jsonsecret"
 	"github.com/Arkoes07/croissant/internal/song"
@@ -65,11 +66,15 @@ func main() {
 		log.Fatalf("[main] failed to init generator: %v\n", err)
 	}
 
-	// initialize in-memory quiz store
-	store := memorystore.New()
+	// initialize quiz service (wires song fetching, generation, and persistence)
+	var quizSvc quiz.Service
+	{
+		store := memorystore.New()
+		quizSvc = quizservice.New(songSvc, gen, store)
+	}
 
 	// initialize web server
-	srv, err := web.New(songSvc, gen, store)
+	srv, err := web.New(quizSvc)
 	if err != nil {
 		log.Fatalf("[main] failed to init web server: %v\n", err)
 	}

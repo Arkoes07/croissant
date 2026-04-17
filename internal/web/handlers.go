@@ -1,23 +1,13 @@
 package web
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/Arkoes07/croissant/internal/quiz"
 	"github.com/Arkoes07/croissant/internal/song"
 )
-
-// newID generates a random 8-byte hex ID for a quiz session.
-func newID() string {
-	b := make([]byte, 8)
-	rand.Read(b)
-	return hex.EncodeToString(b)
-}
 
 // isHTMX reports whether the request was made by HTMX.
 func isHTMX(r *http.Request) bool {
@@ -31,32 +21,10 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleNewQuiz(w http.ResponseWriter, r *http.Request) {
-	songs, err := s.songSvc.GetSongs()
+	q, err := s.quizSvc.NewQuiz()
 	if err != nil {
-		// ErrCountMismatch means fewer preview-URL tracks than requested — proceed
-		// if we have at least some songs; the generator will validate the count.
-		slog.Warn("GetSongs returned non-nil error", "err", err, "count", len(songs))
-		if len(songs) == 0 {
-			http.Error(w, "failed to load songs from Spotify", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	questions, err := s.generator.Generate(songs)
-	if err != nil {
-		slog.Error("generate questions", "err", err)
-		http.Error(w, "not enough songs to build a quiz — try a bigger playlist", http.StatusInternalServerError)
-		return
-	}
-
-	q := quiz.Quiz{
-		ID:        newID(),
-		Questions: questions,
-		StartedAt: time.Now(),
-	}
-	if err := s.store.Save(q); err != nil {
-		slog.Error("save quiz", "err", err)
-		http.Error(w, "failed to save quiz session", http.StatusInternalServerError)
+		slog.Error("new quiz", "err", err)
+		http.Error(w, "failed to create quiz: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -76,7 +44,7 @@ type questionData struct {
 func (s *Server) handleQuestion(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	q, err := s.store.Get(id)
+	q, err := s.quizSvc.GetQuiz(id)
 	if err != nil {
 		http.Error(w, "quiz not found", http.StatusNotFound)
 		return
@@ -115,36 +83,22 @@ type answerData struct {
 func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	q, err := s.store.Get(id)
-	if err != nil {
-		http.Error(w, "quiz not found", http.StatusNotFound)
-		return
-	}
-
-	if q.IsDone() {
-		http.Redirect(w, r, "/quiz/"+id+"/result", http.StatusSeeOther)
-		return
-	}
-
-	// Capture the correct song before Answer() advances CurrentIdx.
-	current := q.Questions[q.CurrentIdx]
-	correctSong := current.Choices[current.CorrectIdx]
-
 	choiceIdx, err := strconv.Atoi(r.FormValue("choiceIdx"))
 	if err != nil {
 		http.Error(w, "invalid choice", http.StatusBadRequest)
 		return
 	}
 
-	correct, err := q.Answer(choiceIdx)
+	result, err := s.quizSvc.Answer(id, choiceIdx)
 	if err != nil {
-		http.Error(w, "could not record answer: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := s.store.Save(q); err != nil {
-		slog.Error("save quiz after answer", "err", err)
-		http.Error(w, "failed to save quiz session", http.StatusInternalServerError)
+		switch err {
+		case quiz.ErrNotFound:
+			http.Error(w, "quiz not found", http.StatusNotFound)
+		case quiz.ErrAlreadyDone:
+			http.Redirect(w, r, "/quiz/"+id+"/result", http.StatusSeeOther)
+		default:
+			http.Error(w, "could not record answer: "+err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 
@@ -152,11 +106,11 @@ func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 	if isHTMX(r) {
 		data := answerData{
 			QuizID:      id,
-			Correct:     correct,
-			CorrectSong: correctSong,
-			Score:       q.Score,
-			Answered:    q.CurrentIdx, // already advanced by Answer()
-			IsDone:      q.IsDone(),
+			Correct:     result.Correct,
+			CorrectSong: result.CorrectSong,
+			Score:       result.Score,
+			Answered:    result.Answered,
+			IsDone:      result.IsDone,
 		}
 		if err := s.tmpl.answer.ExecuteTemplate(w, "answer", data); err != nil {
 			slog.Error("render answer fragment", "err", err)
@@ -165,7 +119,7 @@ func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Non-HTMX fallback → redirect (no answer feedback shown).
-	if q.IsDone() {
+	if result.IsDone {
 		http.Redirect(w, r, "/quiz/"+id+"/result", http.StatusSeeOther)
 		return
 	}
@@ -182,7 +136,7 @@ type resultData struct {
 func (s *Server) handleResult(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	q, err := s.store.Get(id)
+	q, err := s.quizSvc.GetQuiz(id)
 	if err != nil {
 		http.Error(w, "quiz not found", http.StatusNotFound)
 		return
