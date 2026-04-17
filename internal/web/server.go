@@ -14,9 +14,8 @@ var templateFS embed.FS
 
 // Server holds all dependencies for the HTTP layer.
 type Server struct {
-	quizSvc  quiz.Service
-	tmpl     *parsedTemplates
-	basePath string // e.g. "/croissant"; empty string means serve at root
+	quizSvc quiz.Service
+	tmpl    *parsedTemplates
 }
 
 // parsedTemplates holds pre-parsed template sets, one per rendered view.
@@ -28,18 +27,16 @@ type parsedTemplates struct {
 }
 
 // New creates a Server, parsing all templates eagerly so startup fails fast
-// on any template syntax error. basePath is an optional URL prefix the app is
-// mounted under (e.g. "/croissant"); pass "" to serve at the root.
-func New(quizSvc quiz.Service, basePath string) (*Server, error) {
+// on any template syntax error.
+func New(quizSvc quiz.Service) (*Server, error) {
 	tmpl, err := parseTemplates(templateFS)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Server{
-		quizSvc:  quizSvc,
-		tmpl:     tmpl,
-		basePath: basePath,
+		quizSvc: quizSvc,
+		tmpl:    tmpl,
 	}, nil
 }
 
@@ -81,23 +78,14 @@ func parseTemplates(fsys fs.FS) (*parsedTemplates, error) {
 
 // Handler builds and returns the HTTP router.
 func (s *Server) Handler() http.Handler {
-	// inner mux always uses root-relative paths so handlers stay simple.
-	inner := http.NewServeMux()
-	inner.HandleFunc("GET /{$}", s.handleHome)
-	inner.HandleFunc("POST /quiz/new", s.handleNewQuiz)
-	inner.HandleFunc("GET /quiz/{id}", s.handleQuestion)
-	inner.HandleFunc("POST /quiz/{id}/answer", s.handleAnswer)
-	inner.HandleFunc("GET /quiz/{id}/result", s.handleResult)
+	mux := http.NewServeMux()
 
-	if s.basePath == "" {
-		return inner
-	}
+	// /{$} matches only the root path; "GET /" would be a catch-all.
+	mux.HandleFunc("GET /{$}", s.handleHome)
+	mux.HandleFunc("POST /quiz/new", s.handleNewQuiz)
+	mux.HandleFunc("GET /quiz/{id}", s.handleQuestion)
+	mux.HandleFunc("POST /quiz/{id}/answer", s.handleAnswer)
+	mux.HandleFunc("GET /quiz/{id}/result", s.handleResult)
 
-	// Mount inner under basePath, redirecting the bare path to the slash form.
-	outer := http.NewServeMux()
-	outer.HandleFunc("GET "+s.basePath, func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, s.basePath+"/", http.StatusMovedPermanently)
-	})
-	outer.Handle(s.basePath+"/", http.StripPrefix(s.basePath, inner))
-	return outer
+	return mux
 }
