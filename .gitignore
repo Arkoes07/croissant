@@ -17,3 +17,6 @@ vendor/
 
 # Secret file
 files/secret/secret.json
+
+# Claude Code local session data
+.claude/projects/

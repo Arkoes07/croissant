@@ -1,8 +1,32 @@
 {{define "content"}}
 <div class="card">
     <h1>Guess the Song</h1>
-    <p>Listen to a 30-second Spotify preview and pick the correct title. 10 questions, no time limit.</p>
+    <p>Listen to a 30-second preview and pick the correct title. 10 questions, no time limit.</p>
     <form method="POST" action="/quiz/new">
+        <span class="section-label">Choose an era</span>
+        <div class="era-grid">
+            <label class="era-card">
+                <input type="radio" name="playlistID" value="13650084141">
+                <div class="era-card-inner">
+                    <span class="era-decade">20s</span>
+                    <span class="era-label">2020s Hits</span>
+                </div>
+            </label>
+            <label class="era-card">
+                <input type="radio" name="playlistID" value="14917741483" checked>
+                <div class="era-card-inner">
+                    <span class="era-decade">10s</span>
+                    <span class="era-label">2010s Hits</span>
+                </div>
+            </label>
+            <label class="era-card">
+                <input type="radio" name="playlistID" value="248297032">
+                <div class="era-card-inner">
+                    <span class="era-decade">00s</span>
+                    <span class="era-label">2000s Hits</span>
+                </div>
+            </label>
+        </div>
         <button class="btn btn-primary" type="submit">Start Quiz</button>
     </form>
 </div>

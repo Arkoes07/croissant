@@ -20,8 +20,21 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// allowedPlaylists is the set of playlist IDs the user may select on the home page.
+var allowedPlaylists = map[string]bool{
+	"13650084141": true,
+	"14917741483": true,
+	"248297032":   true,
+}
+
 func (s *Server) handleNewQuiz(w http.ResponseWriter, r *http.Request) {
-	q, err := s.quizSvc.NewQuiz()
+	playlistID := r.FormValue("playlistID")
+	if !allowedPlaylists[playlistID] {
+		http.Error(w, "invalid playlist", http.StatusBadRequest)
+		return
+	}
+
+	q, err := s.quizSvc.NewQuiz(playlistID)
 	if err != nil {
 		slog.Error("new quiz", "err", err)
 		http.Error(w, "failed to create quiz: "+err.Error(), http.StatusInternalServerError)

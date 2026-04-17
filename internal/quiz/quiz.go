@@ -21,7 +21,7 @@ type Question struct {
 	Choices []song.Song
 	// CorrectIdx is the index of the correct song within Choices.
 	CorrectIdx int
-	// AudioURL is the 30-second Spotify preview URL to play.
+	// AudioURL is the 30-second preview URL to play.
 	AudioURL string
 }
 
@@ -92,9 +92,9 @@ type AnswerResult struct {
 // question generation, persistence, and answer recording behind a single
 // interface so callers (e.g. the HTTP layer) need only one dependency.
 type Service interface {
-	// NewQuiz fetches songs, generates questions, persists the quiz, and
-	// returns it ready for the first question.
-	NewQuiz() (Quiz, error)
+	// NewQuiz fetches songs from the given playlist, generates questions,
+	// persists the quiz, and returns it ready for the first question.
+	NewQuiz(playlistID string) (Quiz, error)
 	// GetQuiz retrieves an active quiz by ID. Returns ErrNotFound if absent.
 	GetQuiz(id string) (Quiz, error)
 	// Answer records the player's choice for the current question, persists

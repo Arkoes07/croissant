@@ -1,7 +1,52 @@
 {{define "content"}}
 <div class="card">
     <p class="progress">Question {{.QuestionNum}} of {{.TotalQuestions}} &nbsp;·&nbsp; Score: {{.Score}}</p>
-    <audio controls autoplay src="{{.AudioURL}}"></audio>
+    <audio id="audio" src="{{.AudioURL}}"></audio>
+    <div class="player">
+        <button class="player-btn" id="play-btn" aria-label="Play">&#9654;</button>
+        <div class="player-progress-wrap">
+            <div class="player-bar-track" id="bar-track">
+                <div class="player-bar-fill" id="bar-fill"></div>
+            </div>
+            <span class="player-time" id="time-display">0:00 / 0:29</span>
+        </div>
+    </div>
+    <script>
+    (function() {
+        var audio = document.getElementById('audio');
+        var btn   = document.getElementById('play-btn');
+        var fill  = document.getElementById('bar-fill');
+        var timeEl = document.getElementById('time-display');
+
+        function fmt(s) {
+            if (isNaN(s)) return '0:00';
+            var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+            return m + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+
+        btn.addEventListener('click', function() {
+            audio.paused ? audio.play() : audio.pause();
+        });
+
+        audio.addEventListener('play',  function() { btn.innerHTML = '&#9646;&#9646;'; });
+        audio.addEventListener('pause', function() { btn.innerHTML = '&#9654;'; });
+        audio.addEventListener('ended', function() { btn.innerHTML = '&#9654;'; });
+
+        audio.addEventListener('timeupdate', function() {
+            var pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
+            fill.style.width = pct + '%';
+            timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+        });
+
+        document.getElementById('bar-track').addEventListener('click', function(e) {
+            if (!audio.duration) return;
+            var rect = this.getBoundingClientRect();
+            audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+        });
+
+        audio.play().catch(function() {});
+    })();
+    </script>
     <p class="instruction">Which song is this?</p>
     <div class="choices">
         {{range $i, $choice := .Choices}}
