@@ -66,7 +66,18 @@ croissant/
 - Each adapter has a `Config` struct grouping its tunables; `New` validates and applies defaults.
 - Errors exported as `Err...` vars (e.g. `song.ErrCountMismatch`).
 - Doc comments on every exported type/func.
-- `main.go` uses bare-block scoping (`{ ... }`) to keep wiring sections visually grouped.
+- `cmd/croissant/main.go` uses bare-block scoping (`{ ... }`) to keep wiring sections visually grouped.
+- **Struct literals always use multi-line format**, even for two fields:
+  ```go
+  // correct
+  &service{
+      cfg:    cfg,
+      client: client,
+  }
+
+  // wrong
+  &service{cfg: cfg, client: client}
+  ```
 
 ## Running it
 

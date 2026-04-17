@@ -42,7 +42,10 @@ func New(clientID string, clientSecret string, cfg Config) (*service, error) {
 		return nil, err
 	}
 
-	return &service{cfg: cfg, client: client}, nil
+	return &service{
+		cfg:    cfg,
+		client: client,
+	}, nil
 }
 
 // createSpotifyClient will connect and return a spotify client

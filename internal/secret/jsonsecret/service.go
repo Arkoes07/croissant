@@ -19,7 +19,9 @@ type Config struct {
 
 // New will create a new service
 func New(cfg Config) *service {
-	return &service{cfg: cfg}
+	return &service{
+		cfg: cfg,
+	}
 }
 
 // secretJSON represents the structure of data in a json secret file
