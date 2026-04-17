@@ -50,12 +50,12 @@
     <p class="instruction">Which song is this?</p>
     <div class="choices">
         {{range $i, $choice := .Choices}}
-        <form method="POST" action="/quiz/{{$.QuizID}}/answer">
+        <form method="POST" action="{{$.BasePath}}/quiz/{{$.QuizID}}/answer">
             <input type="hidden" name="choiceIdx" value="{{$i}}">
             <button
                 class="btn btn-choice choice-btn"
                 type="submit"
-                hx-post="/quiz/{{$.QuizID}}/answer"
+                hx-post="{{$.BasePath}}/quiz/{{$.QuizID}}/answer"
                 hx-include="closest form"
                 hx-target="#content"
                 hx-swap="innerHTML"

@@ -14,8 +14,19 @@ func isHTMX(r *http.Request) bool {
 	return r.Header.Get("HX-Request") == "true"
 }
 
+// pageData is embedded in every template data struct to carry the base path.
+type pageData struct {
+	BasePath string
+}
+
+// homeData is the template data for the home page.
+type homeData struct {
+	pageData
+}
+
 func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
-	if err := s.tmpl.home.ExecuteTemplate(w, "layout", nil); err != nil {
+	data := homeData{pageData{BasePath: s.basePath}}
+	if err := s.tmpl.home.ExecuteTemplate(w, "layout", data); err != nil {
 		slog.Error("render home", "err", err)
 	}
 }
@@ -41,11 +52,12 @@ func (s *Server) handleNewQuiz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/quiz/"+q.ID, http.StatusSeeOther)
+	http.Redirect(w, r, s.basePath+"/quiz/"+q.ID, http.StatusSeeOther)
 }
 
 // questionData is the template data for the question page.
 type questionData struct {
+	pageData
 	QuizID         string
 	QuestionNum    int
 	TotalQuestions int
@@ -64,12 +76,13 @@ func (s *Server) handleQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if q.IsDone() {
-		http.Redirect(w, r, "/quiz/"+id+"/result", http.StatusSeeOther)
+		http.Redirect(w, r, s.basePath+"/quiz/"+id+"/result", http.StatusSeeOther)
 		return
 	}
 
 	current := q.Questions[q.CurrentIdx]
 	data := questionData{
+		pageData:       pageData{BasePath: s.basePath},
 		QuizID:         id,
 		QuestionNum:    q.CurrentIdx + 1,
 		TotalQuestions: len(q.Questions),
@@ -85,6 +98,7 @@ func (s *Server) handleQuestion(w http.ResponseWriter, r *http.Request) {
 
 // answerData is the template data for the answer feedback fragment.
 type answerData struct {
+	pageData
 	QuizID      string
 	Correct     bool
 	CorrectSong song.Song
@@ -108,7 +122,7 @@ func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 		case quiz.ErrNotFound:
 			http.Error(w, "quiz not found", http.StatusNotFound)
 		case quiz.ErrAlreadyDone:
-			http.Redirect(w, r, "/quiz/"+id+"/result", http.StatusSeeOther)
+			http.Redirect(w, r, s.basePath+"/quiz/"+id+"/result", http.StatusSeeOther)
 		default:
 			http.Error(w, "could not record answer: "+err.Error(), http.StatusBadRequest)
 		}
@@ -118,6 +132,7 @@ func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 	// HTMX request → return the answer feedback fragment for in-place swap.
 	if isHTMX(r) {
 		data := answerData{
+			pageData:    pageData{BasePath: s.basePath},
 			QuizID:      id,
 			Correct:     result.Correct,
 			CorrectSong: result.CorrectSong,
@@ -133,14 +148,15 @@ func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 
 	// Non-HTMX fallback → redirect (no answer feedback shown).
 	if result.IsDone {
-		http.Redirect(w, r, "/quiz/"+id+"/result", http.StatusSeeOther)
+		http.Redirect(w, r, s.basePath+"/quiz/"+id+"/result", http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/quiz/"+id, http.StatusSeeOther)
+	http.Redirect(w, r, s.basePath+"/quiz/"+id, http.StatusSeeOther)
 }
 
 // resultData is the template data for the result page.
 type resultData struct {
+	pageData
 	Score   int
 	Total   int
 	Message string
@@ -157,9 +173,10 @@ func (s *Server) handleResult(w http.ResponseWriter, r *http.Request) {
 
 	total := len(q.Questions)
 	data := resultData{
-		Score:   q.Score,
-		Total:   total,
-		Message: scoreMessage(q.Score, total),
+		pageData: pageData{BasePath: s.basePath},
+		Score:    q.Score,
+		Total:    total,
+		Message:  scoreMessage(q.Score, total),
 	}
 
 	if err := s.tmpl.result.ExecuteTemplate(w, "layout", data); err != nil {

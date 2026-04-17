@@ -13,9 +13,9 @@
     {{end}}
     <p class="score-line">Score: {{.Score}} / {{.Answered}}</p>
     {{if .IsDone}}
-    <a class="btn btn-primary" href="/quiz/{{.QuizID}}/result">See your results →</a>
+    <a class="btn btn-primary" href="{{.BasePath}}/quiz/{{.QuizID}}/result">See your results →</a>
     {{else}}
-    <a class="btn btn-primary" href="/quiz/{{.QuizID}}">Next question →</a>
+    <a class="btn btn-primary" href="{{.BasePath}}/quiz/{{.QuizID}}">Next question →</a>
     {{end}}
 </div>
 {{end}}

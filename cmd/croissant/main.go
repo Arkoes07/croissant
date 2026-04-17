@@ -39,7 +39,8 @@ func main() {
 	}
 
 	// initialize web server
-	srv, err := web.New(quizSvc)
+	basePath := os.Getenv("BASE_PATH") // e.g. "/croissant"; empty for root
+	srv, err := web.New(quizSvc, basePath)
 	if err != nil {
 		log.Fatalf("[main] failed to init web server: %v\n", err)
 	}
