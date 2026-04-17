@@ -1,3 +1,6 @@
+[variables]
+GOTOOLCHAIN = "local"
+
 [phases.build]
 cmds = ["go build -o croissant ./cmd/croissant"]
 
