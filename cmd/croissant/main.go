@@ -10,51 +10,26 @@ import (
 	"github.com/Arkoes07/croissant/internal/quiz"
 	"github.com/Arkoes07/croissant/internal/quiz/memorystore"
 	"github.com/Arkoes07/croissant/internal/quiz/quizservice"
-	"github.com/Arkoes07/croissant/internal/secret"
-	"github.com/Arkoes07/croissant/internal/secret/jsonsecret"
 	"github.com/Arkoes07/croissant/internal/song"
-	"github.com/Arkoes07/croissant/internal/song/spotifyservice"
+	"github.com/Arkoes07/croissant/internal/song/jsonservice"
 	"github.com/Arkoes07/croissant/internal/web"
 )
 
 func main() {
-	// generate path to secret directory
-	var secretDir string
-	{
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatalln(err)
-		}
-		secretDir = filepath.Join(dir, "files", "secret")
-	}
-
-	// initialize secret service
-	var secretSvc secret.Service
-	{
-		cfg := jsonsecret.Config{
-			FilePath: filepath.Join(secretDir, "secret.json"),
-		}
-		secretSvc = jsonsecret.New(cfg)
-	}
-
-	// parse Spotify credentials
-	sec, err := secretSvc.Parse()
+	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("[main] failed to parse secret: %v\n", err)
+		log.Fatalln(err)
 	}
 
-	// initialize song service
-	// TODO: move config values to a config file
+	// initialize song service from local JSON file
+	// TODO: switch back to spotifyservice once API access is restored
 	var songSvc song.Service
 	{
-		cfg := spotifyservice.Config{
-			PlaylistID: "37i9dQZF1DXcBWIGoYBM5M",
+		cfg := jsonservice.Config{
+			FilePath:   filepath.Join(dir, "files", "songs", "songs.json"),
 			SongsCount: 20,
 		}
-		songSvc, err = spotifyservice.New(sec.Spotify.ClientID, sec.Spotify.ClientSecret, cfg)
-		if err != nil {
-			log.Fatalf("[main] failed to init song service: %v\n", err)
-		}
+		songSvc = jsonservice.New(cfg)
 	}
 
 	// initialize quiz generator (10 questions, 4 choices each)
