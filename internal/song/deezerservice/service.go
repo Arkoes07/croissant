@@ -10,7 +10,6 @@ import (
 
 const (
 	defaultSongsCount = 10
-	chartURL          = "https://api.deezer.com/chart/0/tracks?limit=%d"
 	playlistURL       = "https://api.deezer.com/playlist/%s/tracks?limit=%d"
 )
 
@@ -22,9 +21,6 @@ type service struct {
 
 // Config stores configurable values for the Deezer song service.
 type Config struct {
-	// PlaylistID is an optional Deezer playlist ID to fetch from.
-	// When empty, the Deezer global chart is used instead.
-	PlaylistID string
 	// SongsCount is how many songs to return per GetSongs call.
 	SongsCount int
 }
@@ -57,11 +53,12 @@ func New(cfg Config) song.Service {
 	}
 }
 
-// GetSongs fetches songs from Deezer and returns SongsCount songs that have a
-// preview URL. It reads from a configured playlist, or the global chart if no
-// playlist ID is set.
-func (s *service) GetSongs() ([]song.Song, error) {
-	url := s.buildURL()
+// GetSongs fetches SongsCount songs with preview URLs from the given Deezer
+// playlist ID.
+func (s *service) GetSongs(playlistID string) ([]song.Song, error) {
+	// Request extra tracks to account for any entries without a preview URL.
+	fetchCount := s.cfg.SongsCount * 3
+	url := fmt.Sprintf(playlistURL, playlistID, fetchCount)
 
 	resp, err := s.client.Get(url)
 	if err != nil {
@@ -98,14 +95,4 @@ func (s *service) GetSongs() ([]song.Song, error) {
 	}
 
 	return songs, nil
-}
-
-// buildURL returns the Deezer API URL based on the configured playlist ID.
-func (s *service) buildURL() string {
-	// Request extra tracks to account for any entries without a preview URL.
-	fetchCount := s.cfg.SongsCount * 3
-	if s.cfg.PlaylistID != "" {
-		return fmt.Sprintf(playlistURL, s.cfg.PlaylistID, fetchCount)
-	}
-	return fmt.Sprintf(chartURL, fetchCount)
 }

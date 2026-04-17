@@ -2,6 +2,8 @@
 
 A song-guessing quiz game built with Go. Listen to 30-second audio previews and pick the correct song title from four choices. Songs are sourced from Deezer's public API — no API key required.
 
+**Live demo:** [croissant.alwisukra.com](https://croissant.alwisukra.com)
+
 ## Features
 
 - 10 questions per game, 4 choices each
@@ -35,12 +37,9 @@ Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 ## Configuration
 
-All config is via environment variables — no config files needed.
-
-| Variable    | Default  | Description                                             |
-|-------------|----------|---------------------------------------------------------|
-| `PORT`      | `8080`   | Port the HTTP server listens on                         |
-| `BASE_PATH` | _(none)_ | URL prefix if mounted at a sub-path (e.g. `/croissant`) |
+| Variable | Default | Description                     |
+|----------|---------|---------------------------------|
+| `PORT`   | `8080`  | Port the HTTP server listens on |
 
 ## Deployment
 
@@ -51,7 +50,7 @@ docker build -t croissant .
 docker run -p 8080:8080 croissant
 ```
 
-This project is deployed on a self-hosted [Coolify](https://coolify.io) instance using the Dockerfile build pack.
+This project is self-hosted on a [Coolify](https://coolify.io) instance at [croissant.alwisukra.com](https://croissant.alwisukra.com) using the Dockerfile build pack.
 
 ## Architecture
 
@@ -61,11 +60,8 @@ Hexagonal (ports & adapters). Domain packages define `Service` interfaces; subpa
 croissant/
 ├── cmd/croissant/main.go          ← entrypoint, wires everything together
 └── internal/
-    ├── secret/                    ← Secret model + Service port
-    │   └── jsonsecret/            ← JSON-file adapter
     ├── song/                      ← Song model + Service port
-    │   ├── deezerservice/         ← Deezer API adapter
-    │   └── jsonservice/           ← Local JSON file adapter (for dev)
+    │   └── deezerservice/         ← Deezer API adapter
     ├── quiz/                      ← Quiz domain: Generator, Store, Service port
     │   ├── memorystore/           ← In-memory Store adapter
     │   └── quizservice/           ← Quiz Service adapter

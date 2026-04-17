@@ -16,5 +16,5 @@ type Song struct {
 
 // Service is a port that defines available behavior of song package
 type Service interface {
-	GetSongs() ([]Song, error)
+	GetSongs(playlistID string) ([]Song, error)
 }

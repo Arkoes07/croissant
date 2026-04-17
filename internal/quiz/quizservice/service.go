@@ -3,7 +3,6 @@ package quizservice
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -13,17 +12,16 @@ import (
 
 // service is the adapter that implements the quiz port.
 type service struct {
-	songSvcs  map[string]song.Service
+	songSvc   song.Service
 	generator *quiz.Generator
 	store     quiz.Store
 }
 
 // New creates a quiz.Service that orchestrates song fetching, question
-// generation, and quiz persistence. songSvcs maps playlist IDs to their
-// corresponding song.Service adapters.
-func New(songSvcs map[string]song.Service, gen *quiz.Generator, store quiz.Store) quiz.Service {
+// generation, and quiz persistence.
+func New(songSvc song.Service, gen *quiz.Generator, store quiz.Store) quiz.Service {
 	return &service{
-		songSvcs:  songSvcs,
+		songSvc:   songSvc,
 		generator: gen,
 		store:     store,
 	}
@@ -39,11 +37,7 @@ func newID() string {
 // NewQuiz fetches songs from the given playlist, generates questions, persists
 // the quiz, and returns it.
 func (s *service) NewQuiz(playlistID string) (quiz.Quiz, error) {
-	songSvc, ok := s.songSvcs[playlistID]
-	if !ok {
-		return quiz.Quiz{}, fmt.Errorf("quizservice: unknown playlist %q", playlistID)
-	}
-	songs, err := songSvc.GetSongs()
+	songs, err := s.songSvc.GetSongs(playlistID)
 	if err != nil {
 		// ErrCountMismatch means fewer preview-URL tracks than requested —
 		// proceed if we still have enough songs for the generator.
