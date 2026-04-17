@@ -3,10 +3,11 @@ package spotifyservice
 import (
 	"context"
 
-	"github.com/zmb3/spotify"
+	"github.com/zmb3/spotify/v2"
+	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/Arkoes07/croissant/pkg/song"
+	"github.com/Arkoes07/croissant/internal/song"
 )
 
 // below are some constants that could be used by service
@@ -29,7 +30,6 @@ type Config struct {
 
 // New will create a new service
 func New(clientID string, clientSecret string, cfg Config) (*service, error) {
-	// validate config
 	if cfg.PlaylistID == "" {
 		cfg.PlaylistID = defaultPlaylistID
 	}
@@ -37,84 +37,56 @@ func New(clientID string, clientSecret string, cfg Config) (*service, error) {
 		cfg.SongsCount = defaultSongsCount
 	}
 
-	// create spotify client
 	client, err := createSpotifyClient(clientID, clientSecret)
 	if err != nil {
 		return nil, err
 	}
 
-	// construct service
-	s := &service{
-		cfg:    cfg,
-		client: client,
-	}
-
-	return s, nil
+	return &service{cfg: cfg, client: client}, nil
 }
 
-// createSpotifyClient will connect and get spotify client
+// createSpotifyClient will connect and return a spotify client
 func createSpotifyClient(clientID string, clientSecret string) (*spotify.Client, error) {
-	// construct config for auth
 	authConfig := &clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		TokenURL:     spotify.TokenURL,
+		TokenURL:     spotifyauth.TokenURL,
 	}
 
-	// get access token
-	accessToken, err := authConfig.Token(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// create and return client
-	client := spotify.Authenticator{}.NewClient(accessToken)
-	return &client, nil
+	httpClient := authConfig.Client(context.Background())
+	client := spotify.New(httpClient)
+	return client, nil
 }
 
 // GetSongs will return list of songs with songsCount length
 func (s *service) GetSongs() ([]song.Song, error) {
-	var songs []song.Song
-	var err error
-
-	// get playlist object from client
-	playlist, err := s.client.GetPlaylist(spotify.ID(s.cfg.PlaylistID))
+	playlist, err := s.client.GetPlaylist(context.Background(), spotify.ID(s.cfg.PlaylistID))
 	if err != nil {
-		return songs, err
+		return nil, err
 	}
 
-	// get songs from playlist
-	count := 0
-	for _, track := range playlist.Tracks.Tracks {
-		// skip if track doesn't have preview URL
-		if track.Track.PreviewURL == "" {
+	var songs []song.Song
+	for _, item := range playlist.Tracks.Tracks {
+		if item.Track.PreviewURL == "" {
 			continue
 		}
 
-		// get artists from a playlist track
 		var artists []string
-		for _, artist := range track.Track.Artists {
+		for _, artist := range item.Track.Artists {
 			artists = append(artists, artist.Name)
 		}
 
-		// create song object
-		song := song.Song{
-			Title:      track.Track.Name,
+		songs = append(songs, song.Song{
+			Title:      item.Track.Name,
 			Artists:    artists,
-			PreviewURL: track.Track.PreviewURL,
-		}
+			PreviewURL: item.Track.PreviewURL,
+		})
 
-		// append into songs array
-		songs = append(songs, song)
-
-		// get only songsCount songs
-		count++
-		if count == s.cfg.SongsCount {
+		if len(songs) == s.cfg.SongsCount {
 			break
 		}
 	}
 
-	// verify songs count
 	if len(songs) != s.cfg.SongsCount {
 		return songs, song.ErrCountMismatch
 	}
