@@ -1,0 +1,25 @@
+{{define "content"}}
+<div class="card">
+    <p class="progress">Question {{.QuestionNum}} of {{.TotalQuestions}} &nbsp;·&nbsp; Score: {{.Score}}</p>
+    <audio controls autoplay src="{{.AudioURL}}"></audio>
+    <p class="instruction">Which song is this?</p>
+    <div class="choices">
+        {{range $i, $choice := .Choices}}
+        <form method="POST" action="/quiz/{{$.QuizID}}/answer">
+            <input type="hidden" name="choiceIdx" value="{{$i}}">
+            <button
+                class="btn btn-choice choice-btn"
+                type="submit"
+                hx-post="/quiz/{{$.QuizID}}/answer"
+                hx-include="closest form"
+                hx-target="#content"
+                hx-swap="innerHTML"
+                hx-on:click="document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true)">
+                {{$choice.Title}}
+                <small>{{range $j, $artist := $choice.Artists}}{{if $j}}, {{end}}{{$artist}}{{end}}</small>
+            </button>
+        </form>
+        {{end}}
+    </div>
+</div>
+{{end}}

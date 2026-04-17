@@ -1,0 +1,21 @@
+{{define "answer"}}
+<div class="card">
+    {{if .Correct}}
+    <p class="feedback correct">✓ Correct!</p>
+    {{else}}
+    <p class="feedback wrong">✗ Wrong</p>
+    <p class="answer-detail">
+        The answer was: <strong>{{.CorrectSong.Title}}</strong>
+        {{if .CorrectSong.Artists}}
+        — {{range $i, $a := .CorrectSong.Artists}}{{if $i}}, {{end}}{{$a}}{{end}}
+        {{end}}
+    </p>
+    {{end}}
+    <p class="score-line">Score: {{.Score}} / {{.Answered}}</p>
+    {{if .IsDone}}
+    <a class="btn btn-primary" href="/quiz/{{.QuizID}}/result">See your results →</a>
+    {{else}}
+    <a class="btn btn-primary" href="/quiz/{{.QuizID}}">Next question →</a>
+    {{end}}
+</div>
+{{end}}

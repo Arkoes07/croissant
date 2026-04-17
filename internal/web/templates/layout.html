@@ -1,0 +1,156 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Croissant — Song Quiz</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: #1a1a30;
+            border-bottom: 1px solid #2a2a48;
+        }
+        header a {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e0e0f0;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        main {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: #1a1a30;
+            border-radius: 14px;
+            padding: 2rem;
+            border: 1px solid #2a2a48;
+        }
+
+        .progress {
+            font-size: 0.82rem;
+            color: #7777aa;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.3px;
+        }
+
+        audio {
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            accent-color: #6c63ff;
+        }
+
+        .instruction {
+            font-size: 0.95rem;
+            color: #9999bb;
+            margin-bottom: 1rem;
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.65rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: background 0.12s, transform 0.08s;
+            text-align: center;
+            line-height: 1.3;
+            width: 100%;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary {
+            background: #6c63ff;
+            color: #fff;
+            margin-top: 1.25rem;
+        }
+        .btn-primary:hover { background: #7d75ff; }
+
+        .btn-choice {
+            background: #23233d;
+            color: #ddddf0;
+            border: 1px solid #2e2e50;
+        }
+        .btn-choice:hover:not(:disabled) { background: #2e2e50; }
+        .btn-choice:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-choice small {
+            display: block;
+            font-size: 0.73rem;
+            color: #7777aa;
+            font-weight: 400;
+            margin-top: 0.2rem;
+        }
+
+        .feedback {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+        .feedback.correct { color: #4ecca3; }
+        .feedback.wrong   { color: #e94560; }
+
+        .answer-detail {
+            color: #aaaacc;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .answer-detail strong { color: #e0e0f0; }
+
+        .score-line {
+            font-size: 0.85rem;
+            color: #7777aa;
+            margin: 1rem 0 0.25rem;
+        }
+
+        .final-score {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #6c63ff;
+            margin: 0.75rem 0;
+            letter-spacing: -2px;
+        }
+
+        h1 { font-size: 1.6rem; margin-bottom: 0.6rem; letter-spacing: -0.5px; }
+        h2 { font-size: 1.4rem; margin-bottom: 0.6rem; }
+        p  { line-height: 1.6; color: #aaaacc; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/">Croissant 🥐</a>
+    </header>
+    <main id="content">
+        {{block "content" .}}{{end}}
+    </main>
+</body>
+</html>
+{{end}}
